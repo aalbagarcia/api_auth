@@ -21,6 +21,10 @@ module ApiAuth
       def calculated_md5
         if @request.body
           body = @request.raw_post
+          if body.nil?
+            body = @request.body.string if @request.body.respond_to? :string
+            body =  @request.body.instance_variable_get(:@tmp).string.force_encoding("utf-8") if @request.body.instance_variable_get(:@tmp)
+          end
         else
           body = ''
         end
