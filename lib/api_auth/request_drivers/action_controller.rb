@@ -23,7 +23,22 @@ module ApiAuth
           body = @request.raw_post
           if body.nil?
             body = @request.body.string if @request.body.respond_to? :string
-            body =  @request.body.instance_variable_get(:@tmp).string.force_encoding("utf-8") if @request.body.instance_variable_get(:@tmp)
+            body = @request.body.read if @request.body.respond_to? :read
+            unless body
+              if (defined?(PhusionPassenger::Utils::TeeInput) and
+                  @request.body.is_a?(PhusionPassenger::Utils::TeeInput) and
+                  @request.body.instance_variable_get(:@tmp).respond_to?(:string)
+              )
+                body =  @request.body.instance_variable_get(:@tmp).string.force_encoding("utf-8")
+              elsif (defined?(PhusionPassenger::Utils::TeeInput) and
+                  @request.body.is_a?(PhusionPassenger::Utils::TeeInput) and
+                  @request.body.instance_variable_get(:@tmp).is_a? PhusionPassenger::Utils::TmpIO
+              )
+                body =  @request.body.instance_variable_get(:@tmp).read.force_encoding("utf-8")
+              else
+                body = ''
+              end
+            end
           end
         else
           body = ''
